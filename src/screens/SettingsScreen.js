@@ -1,24 +1,54 @@
 import React from "react";
-import { SafeAreaView, View, Text, StyleSheet, Linking } from "react-native";
-import Header from "../components/Header";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Colors from "../constants/Colors";
+import Header from "../components/Header";
 import CustomButton from "../components/CustomButton";
+import { Linking } from "react-native";
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      <Header userName="User" address="*Dirección*" showSearch={false} />
+      {/* Header */}
+      <Header userName="User" address="*Dirección*" />
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Configuración</Text>
-        <Text style={styles.subtitle}>
-          Personaliza tu experiencia y ajusta la información de tu cuenta.
-        </Text>
+      {/* Título */}
+      <Text style={styles.title}>Ajustes</Text>
 
-        <CustomButton title="Editar Perfil" icon="person-circle-outline" backgroundColor={Colors.primary} color={Colors.dark} fullWidth onPress={() => alert("Funcionalidad en desarrollo")} />
-        <CustomButton title="Notificaciones" icon="notifications-outline" backgroundColor="#fff" color={Colors.dark} fullWidth onPress={() => alert("Configurar notificaciones")} />
+      {/* Opciones de configuración */}
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Ionicons name="person-outline" size={22} color={Colors.dark} />
+          <Text style={styles.optionText}>Información Personal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => navigation.navigate("Payments")}
+        >
+          <Ionicons name="card-outline" size={22} color={Colors.dark} />
+          <Text style={styles.optionText}>Métodos de Pago</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => alert("Función de eliminar cuenta próximamente")}
+        >
+          <Ionicons name="close-outline" size={22} color={Colors.dark} />
+          <Text style={styles.optionText}>Eliminar Cuenta</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* Footer con botón de servicio al cliente */}
       <View style={styles.footer}>
         <CustomButton
           title="Servicio al cliente"
@@ -37,9 +67,36 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 30 },
-  title: { fontSize: 24, fontWeight: "bold", color: Colors.dark, marginBottom: 10 },
-  subtitle: { color: Colors.gray, marginBottom: 25, textAlign: "center" },
-  footer: { paddingHorizontal: 20, paddingBottom: 10, marginBottom: 25 },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 25,
+    paddingTop: 40,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.dark,
+    marginVertical: 15,
+    marginLeft: 5,
+  },
+  optionsContainer: {
+    marginTop: 5,
+  },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  optionText: {
+    fontSize: 15,
+    color: Colors.dark,
+    marginLeft: 12,
+  },
+  footer: {
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    marginTop: "auto",
+    marginBottom: 25,
+  },
 });

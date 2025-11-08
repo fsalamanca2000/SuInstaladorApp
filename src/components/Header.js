@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Colors from "../constants/Colors";
 
 
-const Header = ({ userName = 'User', address = 'Dirección' }) => {
+const Header = ({ userName = 'User', address = 'Dirección', userImage }) => {
   const navigation = useNavigation();
 
   const openMenu = () => {
@@ -22,8 +22,13 @@ const Header = ({ userName = 'User', address = 'Dirección' }) => {
           </TouchableOpacity>
           <TouchableOpacity onPress={openMenu}>
             <View style={styles.profileCircle}>
-              <Ionicons name="person-outline" size={24} color="black" />
+              {userImage ? (
+                <Image source={{ uri: userImage }} style={styles.profileImage} />
+              ) : (
+                <Ionicons name="person-outline" size={24} color="black" />
+              )}
             </View>
+
           </TouchableOpacity>
         </View>
       </View>
@@ -77,4 +82,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#777',
   },
+  profileImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     SafeAreaView,
     View,
@@ -7,14 +7,17 @@ import {
     StyleSheet,
     Image,
     Linking,
+    Alert,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../constants/Colors";
 import CustomButton from "../components/CustomButton";
 import Header from "../components/Header";
 
-
 export default function MenuScreen({ navigation }) {
+    const [userImage, setUserImage] = useState(null);
+
     const handleLogout = () => {
         navigation.reset({
             index: 0,
@@ -22,37 +25,68 @@ export default function MenuScreen({ navigation }) {
         });
     };
 
+    // 📸 Función para seleccionar imagen
+    const pickImage = async () => {
+        // Pedir permisos
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (!permissionResult.granted) {
+            Alert.alert("Permiso requerido", "Se necesita acceso a tus fotos.");
+            return;
+        }
+
+        // Abrir galería
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setUserImage(result.assets[0].uri); // Guardar imagen seleccionada
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header con logo y carrito */}
-            <Header userName="User" address="*Dirección*" />
+            <Header userName="User" address="*Dirección*" userImage={userImage} />
+
+
             {/* Información del usuario */}
             <View style={styles.userSection}>
-                <View style={styles.avatar}>
-                    <Ionicons name="person-outline" size={40} color={Colors.dark} />
+                <View style={styles.avatarContainer}>
+                    {userImage ? (
+                        <Image source={{ uri: userImage }} style={styles.avatarImage} />
+                    ) : (
+                        <View style={styles.avatar}>
+                            <Ionicons name="person-outline" size={40} color={Colors.dark} />
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.nameRow}>
                     <Text style={styles.userName}>*User*</Text>
-                    <TouchableOpacity style={styles.editButton}>
+                    <TouchableOpacity style={styles.editButton} onPress={pickImage}>
                         <Ionicons name="pencil-outline" size={18} color={Colors.dark} />
                     </TouchableOpacity>
                 </View>
             </View>
 
-
             {/* Opciones del menú */}
             <View style={styles.menuOptions}>
+                {/* Ir al Home */}
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate("Main")}
+                    onPress={() => navigation.navigate("Home")}
                 >
                     <Text style={styles.optionText}>Inicio</Text>
                 </TouchableOpacity>
 
+                {/* Ir a Servicios */}
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate("Main", { screen: "Servicios" })}
+                    onPress={() => navigation.navigate("Services")}
                 >
                     <Text style={styles.optionText}>Servicios</Text>
                 </TouchableOpacity>
@@ -104,33 +138,40 @@ const styles = StyleSheet.create({
         paddingHorizontal: 25,
         paddingTop: 40,
     },
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 20,
-    },
-    logo: {
-        width: 100,
-        height: 40,
-    },
     userSection: {
         alignItems: "center",
         marginBottom: 25,
     },
+    avatarContainer: {
+        marginBottom: 8,
+    },
     avatar: {
-        width: 70,
-        height: 70,
+        width: 80,
+        height: 80,
         borderRadius: 50,
         backgroundColor: Colors.primary,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 8,
+    },
+    avatarImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 50,
     },
     userName: {
         fontSize: 16,
         fontWeight: "bold",
         color: Colors.dark,
+    },
+    nameRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+    },
+    editButton: {
+        marginLeft: 5,
+        padding: 4,
     },
     menuOptions: {
         flex: 1,
@@ -145,17 +186,6 @@ const styles = StyleSheet.create({
     footer: {
         paddingHorizontal: 10,
         paddingBottom: 10,
-        marginBottom: 25
+        marginBottom: 25,
     },
-    nameRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6, // separa un poco el texto del ícono (solo funciona en React Native 0.71+)
-    },
-    editButton: {
-        marginLeft: -12, // si no tienes gap
-        padding: 4,
-    },
-
 });
