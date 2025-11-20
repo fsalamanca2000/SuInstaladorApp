@@ -14,11 +14,10 @@ import Colors from "../constants/Colors";
 import Header from "../components/Header";
 import CustomButton from "../components/CustomButton";
 
-// ✅ Importación correcta
+// Contexto actualizado con Firebase
 import { usePaymentMethods } from "../context/PaymentMethodsContext";
 
 export default function PaymentsScreen({ navigation }) {
-  // ✅ Acceso correcto al contexto de métodos de pago
   const {
     cards,
     transfers,
@@ -35,24 +34,26 @@ export default function PaymentsScreen({ navigation }) {
   // Formularios dinámicos
   const [cardNumber, setCardNumber] = useState("");
   const [expDate, setExpDate] = useState("");
-  const [cvv, setCvv] = useState("");
 
   const [bank, setBank] = useState("");
   const [account, setAccount] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (type === "Efectivo") {
-      Alert.alert("Método agregado", "Se agregó pago en efectivo.");
+      Alert.alert("Método agregado", "El pago en efectivo está disponible.");
       return;
     }
 
     if (type === "Tarjeta") {
-      if (!cardNumber || !expDate || !cvv) {
-        Alert.alert("Error", "Completa todos los datos de tarjeta.");
+      if (!cardNumber || !expDate) {
+        Alert.alert("Error", "Completa número de tarjeta y vencimiento.");
         return;
       }
-      addCard({ cardNumber, expDate, cvv });
+
+      await addCard({ cardNumber, expDate });
       Alert.alert("Método agregado", "Tarjeta guardada.");
+      setCardNumber("");
+      setExpDate("");
       return;
     }
 
@@ -61,9 +62,11 @@ export default function PaymentsScreen({ navigation }) {
         Alert.alert("Error", "Completa los datos bancarios.");
         return;
       }
-      addTransfer({ bank, account });
+
+      await addTransfer({ bank, account });
       Alert.alert("Método agregado", "Cuenta guardada.");
-      return;
+      setBank("");
+      setAccount("");
     }
   };
 
@@ -85,15 +88,6 @@ export default function PaymentsScreen({ navigation }) {
             value={expDate}
             onChangeText={setExpDate}
             placeholder="MM/AA"
-          />
-
-          <Text style={styles.label}>CVV</Text>
-          <TextInput
-            style={styles.input}
-            value={cvv}
-            onChangeText={setCvv}
-            secureTextEntry
-            keyboardType="numeric"
           />
         </>
       );
@@ -171,10 +165,12 @@ export default function PaymentsScreen({ navigation }) {
             <Text style={styles.detail}>•••• •••• •••• {c.cardNumber.slice(-4)}</Text>
 
             <View style={styles.methodActions}>
-              <TouchableOpacity onPress={() => setDefaultMethod(c.id)}>
+              <TouchableOpacity
+                onPress={() => setDefaultMethod(c.id, "Tarjeta")}
+              >
                 <Ionicons
                   name={
-                    defaultMethod === c.id
+                    defaultMethod?.id === c.id
                       ? "checkmark-circle"
                       : "checkmark-circle-outline"
                   }
@@ -194,13 +190,17 @@ export default function PaymentsScreen({ navigation }) {
         {transfers.map((t) => (
           <View key={t.id} style={styles.methodCard}>
             <Text style={styles.methodTitle}>Transferencia</Text>
-            <Text style={styles.detail}>{t.bank} — {t.account}</Text>
+            <Text style={styles.detail}>
+              {t.bank} — {t.account}
+            </Text>
 
             <View style={styles.methodActions}>
-              <TouchableOpacity onPress={() => setDefaultMethod(t.id)}>
+              <TouchableOpacity
+                onPress={() => setDefaultMethod(t.id, "Transferencia")}
+              >
                 <Ionicons
                   name={
-                    defaultMethod === t.id
+                    defaultMethod?.id === t.id
                       ? "checkmark-circle"
                       : "checkmark-circle-outline"
                   }
@@ -215,7 +215,6 @@ export default function PaymentsScreen({ navigation }) {
             </View>
           </View>
         ))}
-
       </ScrollView>
     </SafeAreaView>
   );

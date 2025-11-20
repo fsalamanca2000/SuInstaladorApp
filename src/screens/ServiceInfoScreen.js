@@ -10,61 +10,71 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+
 import DateTimePicker from "@react-native-community/datetimepicker";
+
 import Colors from "../constants/Colors";
 import Header from "../components/Header";
 import CustomButton from "../components/CustomButton";
+
 import { usePaymentMethods } from "../context/PaymentMethodsContext";
 import { useReservations } from "../context/ReservationsContext";
+
+// 🔥 IMPORTANTE: Mapeo de imágenes locales
+import { IMAGE_MAP } from "../data/imageMap";
 
 export default function ServiceInfoScreen({ route, navigation }) {
   const { service } = route.params;
 
-  /** 🔹 PAYMENT CONTEXT */
-  const {
-    cards,
-    transfers,
-    defaultMethod,
-  } = usePaymentMethods();
+  /** ---------------------------
+   *  Imagen segura (cubre require, string, URL)
+   * --------------------------*/
+  const imageSource = IMAGE_MAP[service.image]
+    ? IMAGE_MAP[service.image]
+    : typeof service.image === "number"
+    ? service.image
+    : { uri: service.image };
 
+  /** PAYMENT CONTEXT */
+  const { cards, transfers, defaultMethod } = usePaymentMethods();
   const { addReservation } = useReservations();
 
-  /** 🔹 ESTADO DE FORMULARIO */
   const [quantity, setQuantity] = useState("1");
 
   const [paymentType, setPaymentType] = useState(
     defaultMethod ? defaultMethod.type : "Efectivo"
   );
 
-  const [selectedPayment, setSelectedPayment] = useState(defaultMethod || null);
+  const [selectedPayment, setSelectedPayment] = useState(
+    defaultMethod || (paymentType === "Efectivo" ? { type: "Efectivo" } : null)
+  );
 
-  // Fecha seleccionada
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
 
-  // Hora seleccionada
   const [hour, setHour] = useState(new Date());
   const [showHour, setShowHour] = useState(false);
 
-
-  /** Convertir precio "70.000" → 70000 */
+  /** Precio numérico seguro */
   const basePrice = useMemo(() => {
-    if (!service.price) return 0;
-    return parseInt(service.price.replace(/\./g, ""), 10);
+    if (typeof service.price === "number") return service.price;
+    if (typeof service.price === "string")
+      return parseInt(service.price.replace(/\./g, ""), 10);
+    return 0;
   }, [service.price]);
 
-  /** Calcular instaladores según rango */
+  /** Instaladores */
   const installersNeeded = useMemo(() => {
     if (!service.installers) return 1;
 
-    if (!service.installers.includes("a")) {
-      return parseInt(service.installers, 10);
-    }
+    if (typeof service.installers === "number") return service.installers;
 
-    const [min, max] = service.installers.split(" a ").map(Number);
+    const parts = service.installers.replace("–", "-").split("-");
+    const min = parseInt(parts[0], 10) || 1;
+    const max = parseInt(parts[1], 10) || min;
 
-    if (parseInt(quantity) <= 2) return min;
-    return max;
+    const qty = parseInt(quantity, 10);
+    return qty <= 2 ? min : max;
   }, [quantity, service.installers]);
 
   /** Total */
@@ -73,10 +83,9 @@ export default function ServiceInfoScreen({ route, navigation }) {
     return basePrice * q;
   }, [quantity, basePrice]);
 
-
-  /** -----------------------
-   * RESERVAR SERVICIO
-   * ----------------------*/
+  /** ---------------------------
+   *  RESERVAR → guarda en Firebase desde el context
+   * --------------------------*/
   const handleReserve = () => {
     if (!selectedPayment) {
       alert("Debes seleccionar un método de pago");
@@ -84,12 +93,21 @@ export default function ServiceInfoScreen({ route, navigation }) {
     }
 
     const reservation = {
-      ...service,
+      id: null, // Firebase lo asignará
+      title: service.title,
+      description: service.description,
+      category: service.category,
+      subcategory: service.subcategory,
+
+      // 🔥 aquí guardamos solo el string ("cortinas2", etc.)
+      image: service.image,
+
       date: date.toLocaleDateString("es-CO"),
       hour: hour.toLocaleTimeString("es-CO", {
         hour: "2-digit",
         minute: "2-digit",
       }),
+
       quantity,
       installersNeeded,
       totalPrice,
@@ -102,8 +120,7 @@ export default function ServiceInfoScreen({ route, navigation }) {
     navigation.navigate("MyReservations");
   };
 
-
-  /** RENDER DE MÉTODOS DE PAGO */
+  /** Métodos de pago */
   const renderPaymentOptions = () => {
     switch (paymentType) {
       case "Efectivo":
@@ -115,7 +132,7 @@ export default function ServiceInfoScreen({ route, navigation }) {
 
       case "Tarjeta":
         return cards.length === 0 ? (
-          <Text style={styles.label}>No tienes tarjetas guardadas.</Text>
+          <Text style={styles.label}>No tienes tarjetas agregadas.</Text>
         ) : (
           cards.map((c) => (
             <TouchableOpacity
@@ -135,7 +152,7 @@ export default function ServiceInfoScreen({ route, navigation }) {
 
       case "Transferencia":
         return transfers.length === 0 ? (
-          <Text style={styles.label}>No tienes cuentas guardadas.</Text>
+          <Text style={styles.label}>No tienes cuentas agregadas.</Text>
         ) : (
           transfers.map((t) => (
             <TouchableOpacity
@@ -144,7 +161,9 @@ export default function ServiceInfoScreen({ route, navigation }) {
                 styles.methodCard,
                 selectedPayment?.id === t.id && styles.methodCardSelected,
               ]}
-              onPress={() => setSelectedPayment({ ...t, type: "Transferencia" })}
+              onPress={() =>
+                setSelectedPayment({ ...t, type: "Transferencia" })
+              }
             >
               <Text style={styles.methodTitle}>
                 {t.bank} — {t.account}
@@ -158,14 +177,13 @@ export default function ServiceInfoScreen({ route, navigation }) {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.container}>
       <Header userName="User" address="*Dirección*" />
 
       <ScrollView style={styles.scroll}>
         {/* Imagen */}
-        <Image source={{ uri: service.image }} style={styles.image} />
+        <Image source={imageSource} style={styles.image} />
 
         <Text style={styles.title}>{service.title}</Text>
         <Text style={styles.description}>{service.description}</Text>
@@ -225,7 +243,7 @@ export default function ServiceInfoScreen({ route, navigation }) {
           onChangeText={setQuantity}
         />
 
-        {/* Selección de método de pago */}
+        {/* Métodos de pago */}
         <Text style={styles.label}>Método de pago</Text>
 
         <View style={styles.typeSelector}>
@@ -267,7 +285,6 @@ export default function ServiceInfoScreen({ route, navigation }) {
         />
       </ScrollView>
 
-      {/* WhatsApp */}
       <View style={styles.footer}>
         <CustomButton
           title="Servicio al cliente"

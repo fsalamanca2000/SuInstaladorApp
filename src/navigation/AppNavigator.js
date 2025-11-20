@@ -21,7 +21,6 @@ import { ReservationsProvider } from "../context/ReservationsContext";
 import { UserProvider } from "../context/UserContext";
 import { PaymentMethodsProvider } from "../context/PaymentMethodsContext";
 import { ReportesProvider } from "../context/ReportesContext";
-
 import { ServicesProvider } from "../context/ServicesContext";
 
 const Stack = createStackNavigator();
@@ -29,11 +28,13 @@ const Stack = createStackNavigator();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <PaymentMethodsProvider>
-        <UserProvider>
+
+      <UserProvider>
+        <PaymentMethodsProvider>
           <ReservationsProvider>
             <ReportesProvider>
               <ServicesProvider>
+
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="Login" component={LoginScreen} />
                   <Stack.Screen name="Home" component={HomeScreen} />
@@ -50,11 +51,13 @@ export default function AppNavigator() {
                   <Stack.Screen name="MisReportes" component={MisReportesScreen} />
                   <Stack.Screen name="ReportDetails" component={ReportDetailsScreen} />
                 </Stack.Navigator>
+
               </ServicesProvider>
             </ReportesProvider>
           </ReservationsProvider>
-        </UserProvider>
-      </PaymentMethodsProvider>
+        </PaymentMethodsProvider>
+      </UserProvider>
+
     </NavigationContainer>
   );
 }

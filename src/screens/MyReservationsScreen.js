@@ -7,13 +7,18 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+
 import Colors from "../constants/Colors";
 import { useReservations } from "../context/ReservationsContext";
 import Header from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 
+// 🔥 IMPORTANTE: para cargar imágenes locales
+import { IMAGE_MAP } from "../data/imageMap";
+
 export default function MyReservationsScreen() {
-  const { reservations, cancelReservation, completeReservation } = useReservations();
+  const { reservations, cancelReservation, completeReservation } =
+    useReservations();
 
   const [filter, setFilter] = useState("Pendiente");
 
@@ -35,7 +40,10 @@ export default function MyReservationsScreen() {
           {["Pendiente", "Finalizadas", "Cancelada"].map((f) => (
             <TouchableOpacity
               key={f}
-              style={[styles.filterButton, filter === f && styles.filterButtonActive]}
+              style={[
+                styles.filterButton,
+                filter === f && styles.filterButtonActive,
+              ]}
               onPress={() => setFilter(f)}
             >
               <Text
@@ -58,7 +66,16 @@ export default function MyReservationsScreen() {
         {/* Tarjetas */}
         {filteredReservations.map((res) => (
           <View key={res.id} style={styles.card}>
-            <Image source={{ uri: res.image }} style={styles.image} />
+            <Image
+              source={
+                IMAGE_MAP[res.image]
+                  ? IMAGE_MAP[res.image]
+                  : typeof res.image === "number"
+                  ? res.image
+                  : { uri: res.image }
+              }
+              style={styles.image}
+            />
 
             <View style={styles.info}>
               <Text style={styles.service}>{res.title}</Text>
@@ -92,7 +109,11 @@ export default function MyReservationsScreen() {
                     style={styles.completeButton}
                     onPress={() => completeReservation(res.id)}
                   >
-                    <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={20}
+                      color="#fff"
+                    />
                     <Text style={styles.actionText}>Marcar Finalizada</Text>
                   </TouchableOpacity>
 
@@ -100,7 +121,11 @@ export default function MyReservationsScreen() {
                     style={styles.cancelButton}
                     onPress={() => cancelReservation(res.id)}
                   >
-                    <Ionicons name="close-circle-outline" size={20} color="#fff" />
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={20}
+                      color="#fff"
+                    />
                     <Text style={styles.actionText}>Cancelar</Text>
                   </TouchableOpacity>
                 </View>
@@ -130,7 +155,6 @@ const styles = StyleSheet.create({
     color: Colors.gray,
   },
 
-  /* Filtros */
   filterRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -158,7 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  /* Tarjeta */
   card: {
     backgroundColor: "#fff",
     borderRadius: 15,
@@ -191,7 +214,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  /* Estado */
   status: {
     marginTop: 10,
     paddingVertical: 6,
@@ -217,7 +239,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* Botones */
   actionsRow: {
     flexDirection: "row",
     gap: 10,

@@ -16,13 +16,22 @@ export function ServicesProvider({ children }) {
       const data = snapshot.val() || {};
 
       const parsed = Object.fromEntries(
-        Object.entries(data).map(([id, srv]) => [
-          id,
-          {
-            ...srv,
-            image: IMAGE_MAP[srv.image] ?? null,
-          },
-        ])
+        Object.entries(data).map(([id, srv]) => {
+          // 🔥 Asegurar extensión .jpg
+          let imgKey = srv.image;
+          if (!imgKey.includes(".")) {
+            imgKey = `${imgKey}.jpg`;
+          }
+
+          return [
+            id,
+            {
+              ...srv,
+              image: IMAGE_MAP[imgKey] || null,
+              imageName: imgKey,                
+            },
+          ];
+        })
       );
 
       setServices(parsed);

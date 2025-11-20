@@ -12,11 +12,8 @@ export default function ServiceCard({ service, onPress }) {
     );
   }
 
-  // 🔥 Detecta si la imagen es require() o URL
-  const imageSource =
-    typeof service.image === "number"
-      ? service.image // require()
-      : { uri: service.image }; // URL
+  // 🔥 Como el ServicesContext ya garantiza require(), NO necesitamos uri
+  const imageSource = service.image; 
 
   return (
     <View style={styles.card}>

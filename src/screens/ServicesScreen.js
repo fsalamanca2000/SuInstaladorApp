@@ -44,16 +44,14 @@ export default function ServicesScreen({ navigation }) {
   /** 🔥 Categorías */
   const categories = ["Instalación", "Reparación", "Adicionales"];
 
-  /** 🔥 Subcategorías segun categoría seleccionada */
+  /** 🔥 Subcategorías dinámicas */
   const subCategories =
-    CATEGORIES[
-      normalize(selectedCategory)
-    ].subcategories;
+    CATEGORIES[normalize(selectedCategory)].subcategories;
 
-  /** 🔥 Convertir servicios a array */
+  /** 🔥 Convertir objeto → array */
   const servicesList = Object.values(services || {});
 
-  /** 🔥 Filtrar usando normalización */
+  /** 🔥 Filtrar servicios */
   const filteredServices = servicesList.filter(
     (s) =>
       normalize(s.category) === normalize(selectedCategory) &&
@@ -83,9 +81,7 @@ export default function ServicesScreen({ navigation }) {
                 setSelectedCategory(cat);
 
                 const newSubs =
-                  CATEGORIES[
-                    normalize(cat)
-                  ].subcategories;
+                  CATEGORIES[normalize(cat)].subcategories;
 
                 setSelectedSubCategory(newSubs[0]);
               }}
@@ -145,7 +141,7 @@ export default function ServicesScreen({ navigation }) {
         ) : (
           filteredServices.map((service) => (
             <ServiceCard
-              key={service.id}
+              key={service.id?.toString() || `${service.title}-${Math.random()}`}
               service={service}
               onPress={() =>
                 navigation.navigate("ServiceInfo", { service })

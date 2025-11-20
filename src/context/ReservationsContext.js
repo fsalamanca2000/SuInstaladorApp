@@ -1,37 +1,68 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { database } from "../firebase/firebaseConfig";
+import { ref, push, set, onValue, update } from "firebase/database";
+import { useUser } from "./UserContext";
 
 const ReservationsContext = createContext();
 
 export function ReservationsProvider({ children }) {
+  const { currentUser } = useUser();
+
   const [reservations, setReservations] = useState([]);
 
-  // ➕ Agregar nueva reserva
-  const addReservation = (reservation) => {
-    setReservations((prev) => [
-      ...prev,
-      {
-        ...reservation,
-        id: Date.now(),
-        status: "Pendiente", // valores posibles: Pendiente, Completada, Cancelada
-      },
-    ]);
-  };
+  /** ------------------------------
+   * 🔥 1. Cargar reservas desde Firebase
+   * ------------------------------*/
+  useEffect(() => {
+    if (!currentUser?.uid) return;
 
-  // ❌ Cancelar reserva
-  const cancelReservation = (id) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === id ? { ...res, status: "Cancelada" } : res
-      )
+    const userResRef = ref(database, `users/${currentUser.uid}/reservations`);
+
+    const unsubscribe = onValue(userResRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      setReservations(Object.values(data));
+    });
+
+    return unsubscribe;
+  }, [currentUser]);
+
+  /** ------------------------------
+   * 🔥 2. Agregar reserva
+   * ------------------------------*/
+  const addReservation = async (reservation) => {
+    const id = push(
+      ref(database, `users/${currentUser.uid}/reservations`)
+    ).key;
+
+    const payload = {
+      ...reservation,
+      id,
+      status: "Pendiente",
+    };
+
+    await set(
+      ref(database, `users/${currentUser.uid}/reservations/${id}`),
+      payload
     );
   };
 
-  // ✔ Completar reserva
-  const completeReservation = (id) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === id ? { ...res, status: "Completada" } : res
-      )
+  /** ------------------------------
+   * 🔥 3. Cancelar reserva
+   * ------------------------------*/
+  const cancelReservation = async (id) => {
+    await update(
+      ref(database, `users/${currentUser.uid}/reservations/${id}`),
+      { status: "Cancelada" }
+    );
+  };
+
+  /** ------------------------------
+   * 🔥 4. Completar reserva
+   * ------------------------------*/
+  const completeReservation = async (id) => {
+    await update(
+      ref(database, `users/${currentUser.uid}/reservations/${id}`),
+      { status: "Completada" }
     );
   };
 
