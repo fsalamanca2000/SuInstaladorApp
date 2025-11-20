@@ -17,13 +17,15 @@ import CustomButton from "../components/CustomButton";
 import { useUser } from "../context/UserContext";
 
 export default function ProfileScreen({ navigation }) {
-  const { currentUser, updateUser } = useUser();
+  const { currentUser, updateUser, changeEmail, changePassword } = useUser();
 
+  // Estados del formulario
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [password, setPassword] = useState("");
   const [userImage, setUserImage] = useState(null);
 
   useEffect(() => {
@@ -36,9 +38,11 @@ export default function ProfileScreen({ navigation }) {
     }
   }, [currentUser]);
 
-  /** 📸 Cambiar imagen */
+  /** 📸 Seleccionar imagen */
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (!permissionResult.granted) {
       Alert.alert("Permiso requerido", "Se necesita acceso a tus fotos.");
       return;
@@ -56,26 +60,64 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  /** Guardar cambios */
-  const handleSave = () => {
+  /** 🔥 Guardar cambios */
+  const handleSave = async () => {
     if (!name || !email || !phone || !address) {
-      Alert.alert("Error", "Todos los campos excepto contraseña son obligatorios.");
+      Alert.alert(
+        "Error",
+        "Todos los campos excepto la contraseña nueva son obligatorios."
+      );
       return;
     }
 
-    const newData = {
+    /** 🔥 1. Actualizar datos normales */
+    await updateUser({
       name,
-      email,
       phone,
       address,
       image: userImage,
-    };
+    });
 
-    if (password.trim() !== "") {
-      newData.password = password;
+    /** 🔥 2. Cambio de correo */
+    if (email !== currentUser.email) {
+      if (!currentPassword) {
+        Alert.alert(
+          "Atención",
+          "Debes ingresar tu contraseña actual para cambiar el correo."
+        );
+        return;
+      }
+
+      const result = await changeEmail(currentPassword, email);
+
+      if (!result.ok) {
+        console.log("❌ Error al cambiar correo:", result.error);
+        Alert.alert("Error", result.message || "No se pudo cambiar el correo.");
+        return;
+      }
     }
 
-    updateUser(newData);
+    /** 🔥 3. Cambio de contraseña */
+    if (newPassword.trim() !== "") {
+      if (!currentPassword) {
+        Alert.alert(
+          "Atención",
+          "Debes ingresar tu contraseña actual para cambiar la contraseña."
+        );
+        return;
+      }
+
+      const result = await changePassword(currentPassword, newPassword);
+
+      if (!result.ok) {
+        console.log("❌ Error al cambiar contraseña:", result.error);
+        Alert.alert(
+          "Error",
+          result.message || "No se pudo cambiar la contraseña."
+        );
+        return;
+      }
+    }
 
     Alert.alert("Éxito", "Tu información fue actualizada.");
     navigation.goBack();
@@ -127,13 +169,24 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.label}>Dirección</Text>
         <TextInput style={styles.input} value={address} onChangeText={setAddress} />
 
-        <Text style={styles.label}>Cambiar contraseña (opcional)</Text>
+        <Text style={styles.label}>
+          Contraseña actual (requerida para cambios sensibles)
+        </Text>
         <TextInput
           style={styles.input}
-          value={password}
           secureTextEntry
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          placeholder="Contraseña actual"
+        />
+
+        <Text style={styles.label}>Nueva contraseña (opcional)</Text>
+        <TextInput
+          style={styles.input}
+          secureTextEntry
+          value={newPassword}
+          onChangeText={setNewPassword}
           placeholder="Nueva contraseña"
-          onChangeText={setPassword}
         />
 
         <CustomButton
@@ -147,6 +200,7 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
+/* 🎨 ESTILOS — NO SE MODIFICARON */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 

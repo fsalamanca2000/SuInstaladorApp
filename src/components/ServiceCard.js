@@ -12,9 +12,15 @@ export default function ServiceCard({ service, onPress }) {
     );
   }
 
+  // 🔥 Detecta si la imagen es require() o URL
+  const imageSource =
+    typeof service.image === "number"
+      ? service.image // require()
+      : { uri: service.image }; // URL
+
   return (
     <View style={styles.card}>
-      <Image source={{ uri: service.image }} style={styles.image} />
+      <Image source={imageSource} style={styles.image} />
 
       <View style={styles.content}>
         <Text style={styles.title}>{service.title}</Text>

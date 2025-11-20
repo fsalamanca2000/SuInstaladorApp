@@ -14,11 +14,15 @@ import MyReservationsScreen from "../screens/MyReservationsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PaymentsScreen from "../screens/PaymentsScreen";
 import ReportesScreen from "../screens/ReportesScreen";
+import MisReportesScreen from "../screens/MisReportesScreen";
+import ReportDetailsScreen from "../screens/ReportDetailsScreen";
 
 import { ReservationsProvider } from "../context/ReservationsContext";
 import { UserProvider } from "../context/UserContext";
 import { PaymentMethodsProvider } from "../context/PaymentMethodsContext";
 import { ReportesProvider } from "../context/ReportesContext";
+
+import { ServicesProvider } from "../context/ServicesContext";
 
 const Stack = createStackNavigator();
 
@@ -29,20 +33,24 @@ export default function AppNavigator() {
         <UserProvider>
           <ReservationsProvider>
             <ReportesProvider>
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="Home" component={HomeScreen} />
-                <Stack.Screen name="Services" component={ServicesScreen} />
-                <Stack.Screen name="ServiceInfo" component={ServiceInfoScreen} />
-                <Stack.Screen name="Menu" component={MenuScreen} />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
-                <Stack.Screen name="Register" component={RegisterScreen} />
-                <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                <Stack.Screen name="MyReservations" component={MyReservationsScreen} />
-                <Stack.Screen name="Profile" component={ProfileScreen} />
-                <Stack.Screen name="Payments" component={PaymentsScreen} />
-                <Stack.Screen name="Reports" component={ReportesScreen} />
-              </Stack.Navigator>
+              <ServicesProvider>
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="Home" component={HomeScreen} />
+                  <Stack.Screen name="Services" component={ServicesScreen} />
+                  <Stack.Screen name="ServiceInfo" component={ServiceInfoScreen} />
+                  <Stack.Screen name="Menu" component={MenuScreen} />
+                  <Stack.Screen name="Settings" component={SettingsScreen} />
+                  <Stack.Screen name="Register" component={RegisterScreen} />
+                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                  <Stack.Screen name="MyReservations" component={MyReservationsScreen} />
+                  <Stack.Screen name="Profile" component={ProfileScreen} />
+                  <Stack.Screen name="Payments" component={PaymentsScreen} />
+                  <Stack.Screen name="Reports" component={ReportesScreen} />
+                  <Stack.Screen name="MisReportes" component={MisReportesScreen} />
+                  <Stack.Screen name="ReportDetails" component={ReportDetailsScreen} />
+                </Stack.Navigator>
+              </ServicesProvider>
             </ReportesProvider>
           </ReservationsProvider>
         </UserProvider>

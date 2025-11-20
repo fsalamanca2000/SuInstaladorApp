@@ -1,35 +1,43 @@
 import React, { useState } from "react";
 import {
   SafeAreaView,
-  View,
   Text,
-  StyleSheet,
+  View,
   TextInput,
-  ScrollView,
+  StyleSheet,
   TouchableOpacity,
-  Image,
   Alert,
+  Image,
+  ScrollView,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import Colors from "../constants/Colors";
+
 import Header from "../components/Header";
+import Colors from "../constants/Colors";
 import CustomButton from "../components/CustomButton";
-import { useReportes } from "../context/ReportesContext";
+
+import * as ImagePicker from "expo-image-picker";
+import { ref, push, set } from "firebase/database";
+import { database } from "../firebase/firebaseConfig";
 import { useUser } from "../context/UserContext";
 
-export default function ReportesScreen() {
-  const { addReport } = useReportes();
+export default function ReportesScreen({ navigation }) {
   const { currentUser } = useUser();
 
-  const [type, setType] = useState("Servicio");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
+  const [type, setType] = useState("Fallo en la aplicación");
+  const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
 
+  /** 📸 Seleccionar imagen */
   const pickImage = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!perm.granted) {
+      return Alert.alert("Permiso requerido", "Debes permitir acceso a la galería.");
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
-      quality: 0.8,
+      quality: 0.7,
     });
 
     if (!result.canceled) {
@@ -37,24 +45,44 @@ export default function ReportesScreen() {
     }
   };
 
-  const handleSend = () => {
-    if (!category || !description) {
-      Alert.alert("Error", "Completa todos los campos.");
-      return;
+  /** 📌 Enviar Reporte */
+  const submitReport = async () => {
+    if (!message.trim()) {
+      return Alert.alert("Error", "Por favor describe el problema.");
     }
 
-    addReport({
-      userId: currentUser?.id,
-      type,
-      category,
-      description,
-      image,
-    });
+    try {
+      const reportId = push(ref(database, "reports")).key;
 
-    Alert.alert("Enviado", "Tu reporte fue registrado.");
-    setCategory("");
-    setDescription("");
-    setImage(null);
+      const payload = {
+        id: reportId,
+        userId: currentUser?.uid || "anon",
+        type,
+        message,
+        image: null, // Por ahora no se sube
+        createdAt: Date.now(),
+        status: "Pendiente",
+      };
+
+      // Guardar global
+      await set(ref(database, `reports/${reportId}`), payload);
+
+      // Guardar por usuario
+      await set(
+        ref(database, `reportsByUser/${currentUser?.uid}/${reportId}`),
+        payload
+      );
+
+      Alert.alert("Enviado", "Tu reporte fue enviado correctamente.");
+
+      setMessage("");
+      setImage(null);
+
+      navigation.goBack();
+    } catch (err) {
+      console.log("❌ Error al enviar reporte:", err);
+      Alert.alert("Error", "No se pudo enviar el reporte.");
+    }
   };
 
   return (
@@ -66,143 +94,149 @@ export default function ReportesScreen() {
       />
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={styles.title}>Reportes e Informes</Text>
+        <View style={styles.rowBetween}>
+          <Text style={styles.title}>Reportes & Informes</Text>
 
-        {/* Selector tipo */}
-        <Text style={styles.label}>Tipo de reporte</Text>
-        <View style={styles.selectorRow}>
-          {["Servicio", "Aplicación"].map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.selectorBtn, type === t && styles.selectorActive]}
-              onPress={() => setType(t)}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  type === t && styles.selectorTextActive,
-                ]}
-              >
-                {t}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {/* BOTÓN → Mis Reportes */}
+          <TouchableOpacity
+            style={styles.myReportsButton}
+            onPress={() => navigation.navigate("MisReportes")}
+          >
+            <Text style={styles.myReportsText}>Mis Reportes</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Categoría */}
-        <Text style={styles.label}>Categoría</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={
-            type === "Servicio"
-              ? "Ej: Instalador no llegó, daño parcial..."
-              : "Ej: Error en la app, pantallas congeladas..."
-          }
-          value={category}
-          onChangeText={setCategory}
-        />
+        {/* TIPO DE REPORTE */}
+        <Text style={styles.label}>Tipo de reporte:</Text>
 
-        {/* Descripción */}
-        <Text style={styles.label}>Descripción detallada</Text>
+        <View style={styles.typeSelector}>
+          {["Fallo en la aplicación", "Servicio mal ejecutado", "Otro"].map(
+            (item) => (
+              <TouchableOpacity
+                key={item}
+                style={[
+                  styles.typeButton,
+                  type === item && styles.typeButtonActive,
+                ]}
+                onPress={() => setType(item)}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    type === item && styles.typeButtonTextActive,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            )
+          )}
+        </View>
+
+        {/* DESCRIPCIÓN */}
+        <Text style={styles.label}>Descripción del problema:</Text>
         <TextInput
-          style={[styles.input, { height: 120 }]}
+          style={styles.textArea}
+          placeholder="Describe detalladamente..."
+          placeholderTextColor="#888"
           multiline
-          textAlignVertical="top"
-          placeholder="Describe lo ocurrido..."
-          value={description}
-          onChangeText={setDescription}
+          value={message}
+          onChangeText={setMessage}
         />
 
-        {/* Imagen */}
+        {/* IMAGEN OPCIONAL */}
         <Text style={styles.label}>Adjuntar imagen (opcional)</Text>
-        <TouchableOpacity onPress={pickImage}>
+
+        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
           {image ? (
-            <Image source={{ uri: image }} style={styles.image} />
+            <Image source={{ uri: image }} style={styles.previewImage} />
           ) : (
-            <View style={styles.imagePlaceholder}>
-              <Text style={{ color: Colors.gray }}>Seleccionar imagen</Text>
-            </View>
+            <Text style={{ color: "#666" }}>Seleccionar imagen</Text>
           )}
         </TouchableOpacity>
 
         <CustomButton
           title="Enviar reporte"
           backgroundColor={Colors.primary}
-          fullWidth
-          onPress={handleSend}
+          onPress={submitReport}
         />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+/* 🎨 ESTILOS */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  myReportsButton: {
+    backgroundColor: Colors.dark,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  myReportsText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 13,
+  },
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
     color: Colors.dark,
   },
-
   label: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
-    color: Colors.dark,
     marginBottom: 8,
-    marginTop: 10,
+    marginTop: 15,
+    color: Colors.dark,
   },
-
-  selectorRow: {
+  typeSelector: {
     flexDirection: "row",
-    marginBottom: 15,
     gap: 10,
   },
-
-  selectorBtn: {
+  typeButton: {
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingHorizontal: 12,
     backgroundColor: "#eee",
+    borderRadius: 12,
   },
-
-  selectorActive: {
+  typeButtonActive: {
     backgroundColor: Colors.primary,
   },
-
-  selectorText: {
+  typeButtonText: {
     color: Colors.dark,
   },
-
-  selectorTextActive: {
+  typeButtonTextActive: {
     color: "#fff",
     fontWeight: "700",
   },
-
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginBottom: 15,
-  },
-
-  image: {
-    width: "100%",
-    height: 180,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-
-  imagePlaceholder: {
-    width: "100%",
-    height: 120,
-    borderRadius: 12,
+  textArea: {
     backgroundColor: "#eee",
+    borderRadius: 12,
+    height: 120,
+    padding: 12,
+    textAlignVertical: "top",
+  },
+  imagePicker: {
+    backgroundColor: "#f1f1f1",
+    height: 150,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
   },
 });

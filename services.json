@@ -1,0 +1,112 @@
+{
+  "1": {
+    "title": "Instalación de Cortinas Tradicionales",
+    "category": "Instalación",
+    "subcategory": "Cortinas",
+    "description": "Perfectas para salas, cuartos y comedores",
+    "price": 70000,
+    "installers": "1-2",
+    "image": "cortinas1",
+    "isActive": true
+  },
+  "2": {
+    "title": "Instalación de Barras y Cenefas",
+    "category": "Instalación",
+    "subcategory": "Cortinas",
+    "description": "Montaje profesional y nivelado",
+    "price": 60000,
+    "installers": "1",
+    "image": "cortinas2",
+    "isActive": true
+  },
+  "3": {
+    "title": "Instalación de Persianas Enrollables",
+    "category": "Instalación",
+    "subcategory": "Persianas",
+    "description": "Blackout, sunscreen y decorativas",
+    "price": 85000,
+    "installers": "1-2",
+    "image": "persianas1",
+    "isActive": true
+  },
+  "4": {
+    "title": "Instalación de Persianas Shangri-La",
+    "category": "Instalación",
+    "subcategory": "Persianas",
+    "description": "Sistema premium con acabado suave",
+    "price": 120000,
+    "installers": "1-2",
+    "image": "persianas2",
+    "isActive": true
+  },
+  "5": {
+    "title": "Instalación de Soporte Fijo",
+    "category": "Instalación",
+    "subcategory": "Soportes TV",
+    "description": "Montaje seguro y nivelado",
+    "price": 55000,
+    "installers": "1",
+    "image": "soporte_fijo",
+    "isActive": true
+  },
+  "6": {
+    "title": "Instalación de Soporte Articulado",
+    "category": "Instalación",
+    "subcategory": "Soportes TV",
+    "description": "Sistema móvil con brazos reforzados",
+    "price": 95000,
+    "installers": "1",
+    "image": "soporte_articulado",
+    "isActive": true
+  },
+  "7": {
+    "title": "Instalar Espejo Mediano",
+    "category": "Instalación",
+    "subcategory": "Espejos",
+    "description": "Fijación segura con nivelación",
+    "price": 60000,
+    "installers": "1",
+    "image": "espejo1",
+    "isActive": true
+  },
+  "8": {
+    "title": "Instalar Espejo Grande",
+    "category": "Instalación",
+    "subcategory": "Espejos",
+    "description": "Ideal para salas, gimnasios y habitaciones",
+    "price": 90000,
+    "installers": "2",
+    "image": "espejo2",
+    "isActive": true
+  },
+  "9": {
+    "title": "Instalación de Repisas y Estanterías",
+    "category": "Instalación",
+    "subcategory": "Repisas",
+    "description": "Fijación profesional y alineada",
+    "price": 50000,
+    "installers": "1",
+    "image": "repisas1",
+    "isActive": true
+  },
+  "10": {
+    "title": "Reparación de cortinas",
+    "category": "Reparación",
+    "subcategory": "Cortinas",
+    "description": "Ajustes, reposición y nivelación",
+    "price": 50000,
+    "installers": "1",
+    "image": "cortinas_reparacion",
+    "isActive": true
+  },
+  "11": {
+    "title": "Reparación de persianas",
+    "category": "Reparación",
+    "subcategory": "Persianas",
+    "description": "Enrollable, vertical y panel japonés",
+    "price": 65000,
+    "installers": "1",
+    "image": "persianas_reparacion",
+    "isActive": true
+  }
+}

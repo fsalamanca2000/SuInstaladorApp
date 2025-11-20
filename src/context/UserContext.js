@@ -1,74 +1,207 @@
-import React, { createContext, useState, useContext } from "react";
+// src/context/UserContext.js
+
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { auth, database } from "../firebase/firebaseConfig";
+
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  deleteUser,
+  updateEmail,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  onAuthStateChanged,
+} from "firebase/auth";
+
+import { ref, get, set, update, remove } from "firebase/database";
+import { uploadImage } from "../firebase/storage";
 
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  // Lista de usuarios registrados (por ahora quemados o añadidos desde Register)
-  const [users, setUsers] = useState([]);
-
-  // Usuario logueado actualmente
   const [currentUser, setCurrentUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  /** 🔹 Registrar usuario */
-  const register = (userData) => {
-    const newUser = {
-      id: Date.now(),
-      ...userData,
+  // ---------------------------------------------------------
+  // 🔥 Mantener sesión activa (Firebase Auth Listener)
+  // ---------------------------------------------------------
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setCurrentUser(null);
+        setLoadingUser(false);
+        return;
+      }
+
+      const snapshot = await get(ref(database, `users/${user.uid}`));
+      const data = snapshot.val();
+
+      setCurrentUser({
+        uid: user.uid,
+        email: user.email,
+        name: data?.name || "",
+        phone: data?.phone || "",
+        address: data?.address || "",
+        image: data?.image || null,
+      });
+
+      setLoadingUser(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // ---------------------------------------------------------
+  // ✔ REGISTRAR USUARIO
+  // ---------------------------------------------------------
+  const register = async ({ name, email, password, phone, address, image }) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = result.user.uid;
+
+      let imageURL = null;
+
+      if (image) {
+        imageURL = await uploadImage(image, `profilePictures/${uid}.jpg`);
+      }
+
+      await set(ref(database, `users/${uid}`), {
+        name,
+        phone,
+        address,
+        email,
+        image: imageURL,
+      });
+
+      return true;
+    } catch (error) {
+      console.log("❌ Error registro:", error);
+      return false;
+    }
+  };
+
+  // ---------------------------------------------------------
+  // ✔ LOGIN
+  // ---------------------------------------------------------
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // ---------------------------------------------------------
+  // ✔ LOGOUT
+  // ---------------------------------------------------------
+  const logout = async () => {
+    await signOut(auth);
+  };
+
+  // ---------------------------------------------------------
+  // ✔ ELIMINAR CUENTA COMPLETA
+  // ---------------------------------------------------------
+  const deleteAccount = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      await remove(ref(database, `users/${user.uid}`));
+      await deleteUser(user);
+
+      setCurrentUser(null);
+    } catch (error) {
+      console.log("❌ Error eliminando cuenta:", error);
+    }
+  };
+
+  // ---------------------------------------------------------
+  // ✔ ACTUALIZAR DATOS NO SENSIBLES (nombre, teléfono, dirección, imagen)
+  // ---------------------------------------------------------
+  const updateUser = async (updatedData) => {
+    if (!auth.currentUser) return;
+
+    const uid = auth.currentUser.uid;
+    let imageURL = currentUser.image;
+
+    // Subir imagen si cambió
+    if (updatedData.image && updatedData.image !== currentUser.image) {
+      imageURL = await uploadImage(updatedData.image, `profilePictures/${uid}.jpg`);
+    }
+
+    const updates = {
+      name: updatedData.name,
+      phone: updatedData.phone,
+      address: updatedData.address,
+      image: imageURL,
     };
 
-    setUsers((prev) => [...prev, newUser]);
-    setCurrentUser(newUser);
+    await update(ref(database, `users/${uid}`), updates);
+
+    setCurrentUser((prev) => ({ ...prev, ...updates }));
   };
 
-  /** 🔹 Login (muy simple para ahora) */
-  const login = (email, password) => {
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
+  // ---------------------------------------------------------
+  // 🔥 Cambiar Email (requiere reautenticación)
+  // ---------------------------------------------------------
+  const changeEmail = async (currentPassword, newEmail) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return { ok: false, message: "No hay usuario activo." };
 
-    if (user) {
-      setCurrentUser(user);
-      return true;
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+      await reauthenticateWithCredential(user, credential);
+      await updateEmail(user, newEmail);
+
+      // actualizar también en la DB
+      await update(ref(database, `users/${user.uid}`), { email: newEmail });
+
+      return { ok: true };
+    } catch (error) {
+      console.log("❌ Error changeEmail:", error);
+      return { ok: false, error, message: error.message };
     }
-    return false;
   };
 
-  /** 🔹 Logout */
-  const logout = () => {
-    setCurrentUser(null);
+  // ---------------------------------------------------------
+  // 🔥 Cambiar Contraseña (requiere reautenticación)
+  // ---------------------------------------------------------
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return { ok: false, message: "No hay usuario activo." };
+
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+
+      return { ok: true };
+    } catch (error) {
+      console.log("❌ Error changePassword:", error);
+      return { ok: false, error, message: error.message };
+    }
   };
 
-  /** 🔹 Eliminar cuenta */
-  const deleteAccount = () => {
-    if (!currentUser) return;
-
-    setUsers((prev) => prev.filter((u) => u.id !== currentUser.id));
-    setCurrentUser(null); // cerrar sesión automáticamente
-  };
-
-  /** 🔹 Editar datos del usuario actual */
-  const updateUser = (updatedData) => {
-    if (!currentUser) return;
-
-    const updatedUser = { ...currentUser, ...updatedData };
-
-    setUsers((prev) =>
-      prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-    );
-
-    setCurrentUser(updatedUser);
-  };
-
+  // ---------------------------------------------------------
+  // EXPORTAR CONTEXTO
+  // ---------------------------------------------------------
   return (
     <UserContext.Provider
       value={{
-        users,
         currentUser,
+        loadingUser,
         register,
         login,
         logout,
-        deleteAccount,
         updateUser,
+        deleteAccount,
+        changeEmail,
+        changePassword,
       }}
     >
       {children}

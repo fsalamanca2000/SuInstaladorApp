@@ -7,29 +7,53 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Image,
 } from "react-native";
 import Colors from "../constants/Colors";
 import CustomButton from "../components/CustomButton";
 
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../firebase/firebaseConfig";
+
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState("");
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!email.trim()) {
       return Alert.alert("Error", "Por favor ingresa tu correo electrónico.");
     }
 
-    Alert.alert(
-      "Simulación exitosa",
-      "Se envió un enlace de restablecimiento (ficticio) a tu correo."
-    );
+    try {
+      await sendPasswordResetEmail(auth, email);
 
-    navigation.goBack();
+      Alert.alert(
+        "Correo enviado",
+        "Te hemos enviado un enlace para restablecer tu contraseña."
+      );
+
+      navigation.goBack();
+    } catch (error) {
+      console.log("❌ Error reset:", error);
+
+      let msg = "No se pudo enviar el correo. Verifica que esté registrado.";
+      if (error.code === "auth/invalid-email") msg = "El formato del correo no es válido.";
+      if (error.code === "auth/user-not-found") msg = "No existe un usuario con este correo.";
+
+      Alert.alert("Error", msg);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
+
+        {/* 📌 Logo */}
+        <Image
+          source={require("../../assets/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
         <Text style={styles.title}>Restablecer contraseña</Text>
 
         <TextInput
@@ -56,6 +80,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   );
 }
 
+/* 🎨 ESTILOS — NO SE MODIFICARON */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -65,6 +90,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 30,
+    alignItems: "center",
+  },
+  logo: {
+    width: 180,
+    height: 120,
+    marginBottom: 20,
   },
   title: {
     fontSize: 26,
@@ -74,6 +105,7 @@ const styles = StyleSheet.create({
     color: Colors.dark,
   },
   input: {
+    width: "100%",
     height: 50,
     backgroundColor: "#fff",
     borderRadius: 10,

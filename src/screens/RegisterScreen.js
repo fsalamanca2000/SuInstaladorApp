@@ -44,7 +44,7 @@ export default function RegisterScreen({ navigation }) {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const {
       nombre,
       apellido,
@@ -61,7 +61,7 @@ export default function RegisterScreen({ navigation }) {
     if (contraseña !== confirmarContraseña)
       return Alert.alert("Error", "Las contraseñas no coinciden.");
 
-    register({
+    const success = await register({
       name: `${nombre} ${apellido}`,
       email,
       address: direccion,
@@ -69,6 +69,11 @@ export default function RegisterScreen({ navigation }) {
       password: contraseña,
       image,
     });
+
+    if (!success) {
+      Alert.alert("Error", "No se pudo crear la cuenta.");
+      return;
+    }
 
     Alert.alert("Registro exitoso", "Tu cuenta fue creada.");
 
