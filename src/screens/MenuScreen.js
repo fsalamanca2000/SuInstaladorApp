@@ -27,7 +27,6 @@ export default function MenuScreen({ navigation }) {
 
     // 📸 Función para seleccionar imagen
     const pickImage = async () => {
-        // Pedir permisos
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
         if (!permissionResult.granted) {
@@ -35,7 +34,6 @@ export default function MenuScreen({ navigation }) {
             return;
         }
 
-        // Abrir galería
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -44,7 +42,7 @@ export default function MenuScreen({ navigation }) {
         });
 
         if (!result.canceled) {
-            setUserImage(result.assets[0].uri); // Guardar imagen seleccionada
+            setUserImage(result.assets[0].uri);
         }
     };
 
@@ -52,30 +50,8 @@ export default function MenuScreen({ navigation }) {
         <SafeAreaView style={styles.container}>
             <Header userName="User" address="*Dirección*" userImage={userImage} />
 
-
-            {/* Información del usuario */}
-            <View style={styles.userSection}>
-                <View style={styles.avatarContainer}>
-                    {userImage ? (
-                        <Image source={{ uri: userImage }} style={styles.avatarImage} />
-                    ) : (
-                        <View style={styles.avatar}>
-                            <Ionicons name="person-outline" size={40} color={Colors.dark} />
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.nameRow}>
-                    <Text style={styles.userName}>*User*</Text>
-                    <TouchableOpacity style={styles.editButton} onPress={pickImage}>
-                        <Ionicons name="pencil-outline" size={18} color={Colors.dark} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
             {/* Opciones del menú */}
             <View style={styles.menuOptions}>
-                {/* Ir al Home */}
                 <TouchableOpacity
                     style={styles.option}
                     onPress={() => navigation.navigate("Home")}
@@ -83,7 +59,6 @@ export default function MenuScreen({ navigation }) {
                     <Text style={styles.optionText}>Inicio</Text>
                 </TouchableOpacity>
 
-                {/* Ir a Servicios */}
                 <TouchableOpacity
                     style={styles.option}
                     onPress={() => navigation.navigate("Services")}
@@ -91,11 +66,18 @@ export default function MenuScreen({ navigation }) {
                     <Text style={styles.optionText}>Servicios</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.option}>
+                <TouchableOpacity
+                    style={styles.option}
+                    onPress={() => navigation.navigate("MyReservations")}
+                >
                     <Text style={styles.optionText}>Mis Reservas</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.option}>
+                {/* 🔥 Aquí el fix */}
+                <TouchableOpacity
+                    style={styles.option}
+                    onPress={() => navigation.navigate("Reports")}
+                >
                     <Text style={styles.optionText}>Reporte e Informes</Text>
                 </TouchableOpacity>
 
@@ -113,7 +95,7 @@ export default function MenuScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Botón de servicio al cliente */}
+            {/* Botón WhatsApp */}
             <View style={styles.footer}>
                 <CustomButton
                     title="Servicio al cliente"

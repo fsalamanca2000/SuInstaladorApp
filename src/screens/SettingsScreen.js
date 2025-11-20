@@ -5,24 +5,52 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../constants/Colors";
 import Header from "../components/Header";
 import CustomButton from "../components/CustomButton";
 import { Linking } from "react-native";
+import { useUser } from "../context/UserContext";
 
 export default function SettingsScreen({ navigation }) {
+  const { deleteAccount, currentUser, logout } = useUser();
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Eliminar cuenta",
+      "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            deleteAccount();
+            logout();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <Header userName="User" address="*Dirección*" />
+      <Header
+        userName={currentUser?.name}
+        address={currentUser?.address}
+        userImage={currentUser?.image}
+      />
 
-      {/* Título */}
       <Text style={styles.title}>Ajustes</Text>
 
-      {/* Opciones de configuración */}
       <View style={styles.optionsContainer}>
+        {/* Información personal */}
         <TouchableOpacity
           style={styles.option}
           onPress={() => navigation.navigate("Profile")}
@@ -31,6 +59,7 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.optionText}>Información Personal</Text>
         </TouchableOpacity>
 
+        {/* Métodos de pago */}
         <TouchableOpacity
           style={styles.option}
           onPress={() => navigation.navigate("Payments")}
@@ -39,16 +68,16 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.optionText}>Métodos de Pago</Text>
         </TouchableOpacity>
 
+        {/* Eliminar cuenta */}
         <TouchableOpacity
           style={styles.option}
-          onPress={() => alert("Función de eliminar cuenta próximamente")}
+          onPress={handleDeleteAccount}
         >
           <Ionicons name="close-outline" size={22} color={Colors.dark} />
           <Text style={styles.optionText}>Eliminar Cuenta</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Footer con botón de servicio al cliente */}
       <View style={styles.footer}>
         <CustomButton
           title="Servicio al cliente"
@@ -57,7 +86,7 @@ export default function SettingsScreen({ navigation }) {
           color="#fff"
           onPress={() =>
             Linking.openURL(
-              "https://api.whatsapp.com/send/?phone=573235050110&text&type=phone_number&app_absent=0"
+              "https://api.whatsapp.com/send/?phone=573235050110"
             )
           }
         />

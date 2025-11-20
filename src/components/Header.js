@@ -1,41 +1,45 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from "../context/UserContext"; 
 import Colors from "../constants/Colors";
 
-
-const Header = ({ userName = 'User', address = 'Dirección', userImage }) => {
+const Header = () => {
   const navigation = useNavigation();
+  const { currentUser } = useUser(); // ✔ Se obtiene del contexto
 
-  const openMenu = () => {
-    navigation.navigate('Menu'); // redirige a la pantalla del menú lateral
-  };
+  const openMenu = () => navigation.navigate('Menu');
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
         <Image source={require('../../assets/logo.png')} style={styles.logo} />
+
         <View style={styles.rightIcons}>
           <TouchableOpacity>
             <Ionicons name="cart-outline" size={24} color="black" style={{ marginRight: 12 }} />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={openMenu}>
             <View style={styles.profileCircle}>
-              {userImage ? (
-                <Image source={{ uri: userImage }} style={styles.profileImage} />
+              {currentUser?.image ? (
+                <Image source={{ uri: currentUser.image }} style={styles.profileImage} />
               ) : (
                 <Ionicons name="person-outline" size={24} color="black" />
               )}
             </View>
-
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.userRow}>
-        <Text style={styles.userText}>Hola, <Text style={{ fontWeight: '600' }}>{userName}</Text></Text>
-        <Text style={styles.addressText}>{address}</Text>
+        <Text style={styles.userText}>
+          Hola, <Text style={{ fontWeight: '600' }}>{currentUser?.name ?? "User"}</Text>
+        </Text>
+        <Text style={styles.addressText}>
+          {currentUser?.address ?? "Dirección"}
+        </Text>
       </View>
     </View>
   );
@@ -43,6 +47,7 @@ const Header = ({ userName = 'User', address = 'Dirección', userImage }) => {
 
 export default Header;
 
+// ✔ TUS ESTILOS ORIGINALES SE MANTIENEN SIN CAMBIO
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.background,
@@ -87,5 +92,4 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
   },
-
 });

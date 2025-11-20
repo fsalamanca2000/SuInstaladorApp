@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -9,48 +9,75 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Alert,
   Linking,
 } from "react-native";
 import Colors from "../constants/Colors";
 import CustomButton from "../components/CustomButton";
+import { useUser } from "../context/UserContext";
 
 export default function LoginScreen({ navigation }) {
+  const { login } = useUser();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Completa todos los campos");
+      return;
+    }
+
+    const success = login(email, password);
+
+    if (!success) {
+      Alert.alert("Error", "Credenciales incorrectas");
+      return;
+    }
+
+    Alert.alert("Bienvenido", "Inicio de sesión exitoso");
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={styles.inner}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Logo principal */}
         <Image
           source={require("../../assets/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
 
-        {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Usuario"
+          placeholder="Correo electrónico"
           placeholderTextColor={Colors.gray}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
         />
+
         <TextInput
           style={styles.input}
           placeholder="Contraseña"
           placeholderTextColor={Colors.gray}
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
 
-        {/* Botón de inicio de sesión */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("Home")}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Iniciar Sesión</Text>
         </TouchableOpacity>
 
-        {/* Opciones adicionales */}
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
           <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
         </TouchableOpacity>
 
@@ -59,7 +86,6 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </KeyboardAvoidingView>
 
-      {/* Botón de soporte */}
       <View style={styles.footer}>
         <CustomButton
           title="Servicio al cliente"
@@ -107,5 +133,5 @@ const styles = StyleSheet.create({
   buttonText: { color: Colors.dark, fontWeight: "bold" },
   forgot: { marginTop: 10, color: Colors.gray, fontSize: 13 },
   register: { marginTop: 5, color: Colors.dark, fontWeight: "500" },
-  footer: { paddingHorizontal: 20, paddingBottom: 10, marginBottom: 25},
+  footer: { paddingHorizontal: 20, paddingBottom: 10, marginBottom: 25 },
 });

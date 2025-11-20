@@ -1,36 +1,36 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native"; // 👈 agregado
 import Colors from "../constants/Colors";
 
-export default function ServiceCard({ title, description, price, installers, image }) {
-  const navigation = useNavigation(); // 👈 agregado
-
-  const handleReserve = () => {
-    // 👇 Navegación temporal (luego se usará el ID desde Supabase)
-    navigation.navigate("ServiceInfo");
-  };
+export default function ServiceCard({ service, onPress }) {
+  if (!service) {
+    return (
+      <View style={styles.errorCard}>
+        <Text style={{ color: "red" }}>Servicio no disponible</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: image }} style={styles.image} />
+      <Image source={{ uri: service.image }} style={styles.image} />
+
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.title}>{service.title}</Text>
+        <Text style={styles.description}>{service.description}</Text>
 
         <View style={styles.infoRow}>
           <Ionicons name="cash-outline" size={14} color={Colors.dark} />
-          <Text style={styles.infoText}>Desde {price} COP</Text>
+          <Text style={styles.infoText}>Desde {service.price} COP</Text>
         </View>
 
         <View style={styles.infoRow}>
           <Ionicons name="people-outline" size={14} color={Colors.dark} />
-          <Text style={styles.infoText}>De {installers} Instaladores</Text>
+          <Text style={styles.infoText}>De {service.installers} Instaladores</Text>
         </View>
 
-        {/* 👇 Agregado onPress para navegación */}
-        <TouchableOpacity style={styles.button} onPress={handleReserve}>
+        <TouchableOpacity style={styles.button} onPress={onPress}>
           <Text style={styles.buttonText}>Reservar</Text>
         </TouchableOpacity>
       </View>
@@ -48,6 +48,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,
+  },
+  errorCard: {
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 15,
+    alignItems: "center",
   },
   image: {
     width: "100%",
